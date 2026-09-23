@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Binomo AI Analyzer</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#07111f;color:#eef5ff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.wrap{max-width:900px;margin:auto;padding:18px}.head h1{margin:0;font-size:25px}.head p{margin:5px 0 16px;color:#91a5bd;font-size:13px}
+.card{background:#101d30;border:1px solid #263954;border-radius:18px;padding:16px;margin-bottom:14px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label{display:block;color:#91a5bd;font-size:12px;margin-bottom:6px}select{width:100%;height:46px;border-radius:11px;border:1px solid #2a405e;background:#091525;color:#fff;padding:0 12px;font-size:15px}
+.market{display:flex;gap:8px}.market button{flex:1;height:44px;border-radius:10px;border:1px solid #2a405e;background:#0a1728;color:#dbeafe;font-weight:800}.market button.active{background:#2496d8;color:#fff}
+.upload{border:1px dashed #46617e;border-radius:15px;padding:20px;text-align:center;margin-top:13px}.upload input{display:none}.upload label{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 18px;border-radius:11px;background:#edf8ff;color:#07111f;font-weight:800}.preview{display:none;margin-top:14px}.preview img{max-width:100%;max-height:390px;border-radius:12px}
+.mainbtn{width:100%;height:50px;margin-top:12px;border:0;border-radius:12px;background:linear-gradient(90deg,#20c4e8,#367ff0);font-weight:900;color:#03101b;font-size:15px}.mainbtn:disabled{opacity:.5}
+.signal{text-align:center;border-radius:15px;padding:18px;background:#0a1727;border:1px solid #263954}.dir{font-size:31px;font-weight:950}.wait{color:#fbbf24}.up{color:#34d399}.down{color:#fb7185}.score{color:#91a5bd;font-size:13px;margin-top:5px}.bar{height:8px;background:#17263a;border-radius:99px;margin-top:12px;overflow:hidden}.bar i{display:block;height:100%;width:0;background:#38bdf8}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}.metric{padding:11px;background:#0a1727;border:1px solid #263954;border-radius:12px}.metric span{display:block;color:#91a5bd;font-size:11px}.metric b{display:block;margin-top:3px}
+.explain{margin-top:12px;padding:12px;border-radius:12px;background:#0a1727;color:#cbd8e8;font-size:13px;line-height:1.5}.note{color:#91a5bd;font-size:11px;line-height:1.5;margin-top:10px}
+@media(max-width:600px){.grid{grid-template-columns:1fr}.wrap{padding:13px}}
+</style>
+</head>
+<body><main class="wrap">
+<header class="head"><h1>BINOMO AI GRAPH ANALYZER</h1><p>Normal ve OTC grafik ekran görüntüsü analiz arayüzü</p></header>
+
+<section class="card"><strong>Piyasa</strong><div class="market" style="margin-top:9px">
+<button id="normal" class="active" type="button">NORMAL</button><button id="otc" type="button">OTC</button></div></section>
+
+<section class="card"><div class="grid">
+<div><label>Varlık</label><select id="asset"><option>EUR/USD</option><option>GBP/USD</option><option>USD/JPY</option><option>AUD/USD</option><option>EUR/GBP</option><option>BTC/USD</option><option>Gold</option><option>Apple</option><option>Tesla</option></select></div>
+<div><label>Grafik zaman aralığı</label><select id="tf"><option>1 dakika</option><option>5 dakika</option><option>15 dakika</option><option>30 dakika</option><option>1 saat</option></select></div>
+<div><label>Analiz ufku</label><select id="horizon"><option>1 dakika</option><option>3 dakika</option><option>5 dakika</option><option>15 dakika</option></select></div>
+<div><label>Analiz modu</label><select id="mode"><option>Dengeli</option><option>Temkinli</option><option>Detaylı</option></select></div>
+</div>
+<div class="upload"><input id="file" type="file" accept="image/png,image/jpeg,image/webp"><label for="file">📷 Grafik Fotoğrafı Seç</label>
+<div id="status" class="note">Binomo ekran görüntüsünü seç.</div><div id="preview" class="preview"><img id="image" alt="Grafik önizleme"></div></div>
+<button id="analyze" class="mainbtn" disabled type="button">GERÇEK AI İLE ANALİZ ET</button>
+<div class="note">API anahtarı tarayıcıya gönderilmez; backend ortam değişkeninde tutulur. Model skoru garanti veya kesin olasılık değildir.</div></section>
+
+<section class="card"><div class="signal" aria-live="polite"><div style="font-size:11px;color:#91a5bd">AI MODEL ÇIKTISI</div>
+<div id="dir" class="dir wait">BEKLE</div><div id="score" class="score">Henüz analiz yapılmadı</div><div class="bar"><i id="bar"></i></div></div>
+<div class="metrics"><div class="metric"><span>Trend</span><b id="trend">—</b></div><div class="metric"><span>Momentum</span><b id="momentum">—</b></div><div class="metric"><span>RSI</span><b id="rsi">—</b></div><div class="metric"><span>Volatilite</span><b id="vol">—</b></div><div class="metric"><span>Destek</span><b id="support">—</b></div><div class="metric"><span>Direnç</span><b id="resist">—</b></div></div>
+<div id="explain" class="explain">AI açıklaması burada görünecek.</div></section>
+</main>
+<script>
+const $=id=>document.getElementById(id);let market="NORMAL",dataUrl=null;
+$("normal").onclick=()=>{market="NORMAL";$("normal").classList.add("active");$("otc").classList.remove("active")};
+$("otc").onclick=()=>{market="OTC";$("otc").classList.add("active");$("normal").classList.remove("active")};
+
+function compress(file){
+ return new Promise((resolve,reject)=>{
+  const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{
+   const max=1600,scale=Math.min(1,max/im.width),c=document.createElement("canvas");c.width=Math.round(im.width*scale);c.height=Math.round(im.height*scale);
+   c.getContext("2d").drawImage(im,0,0,c.width,c.height);resolve(c.toDataURL("image/jpeg",.82));
+  };im.onerror=reject;im.src=r.result};r.onerror=reject;r.readAsDataURL(file)
+ })
+}
+$("file").onchange=async()=>{const f=$("file").files[0];if(!f)return;if(f.size>15*1024*1024){$("status").textContent="Görsel 15 MB'dan küçük olmalı.";return}
+ try{dataUrl=await compress(f);$("image").src=dataUrl;$("preview").style.display="block";$("analyze").disabled=false;$("status").textContent="Grafik hazır. Gerçek AI analizine gönderebilirsin."}catch(e){$("status").textContent="Görsel okunamadı."}};
+$("analyze").onclick=async()=>{
+ if(!dataUrl)return;$("analyze").disabled=true;$("analyze").textContent="AI GRAFİĞİ İNCELİYOR...";
+ try{
+  const body={image:dataUrl,asset:$("asset").value,market,timeframe:$("tf").value,horizon:$("horizon").value,mode:$("mode").value};
+  const res=await fetch("/api/analyze",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const out=await res.json();if(!res.ok)throw new Error(out.error||"AI sunucu hatası");
+  const d=out.direction||"BEKLE",score=Math.max(0,Math.min(100,Number(out.score)||0)),cls=d==="YUKARI"?"up":d==="AŞAĞI"?"down":"wait";
+  $("dir").className="dir "+cls;$("dir").textContent=d;$("score").textContent="Model güven skoru: "+score+"/100 — garanti değildir";$("bar").style.width=score+"%";
+  $("trend").textContent=out.trend||"—";$("momentum").textContent=out.momentum||"—";$("rsi").textContent=out.rsi||"—";$("vol").textContent=out.volatility||"—";$("support").textContent=out.support||"—";$("resist").textContent=out.resistance||"—";$("explain").textContent=out.explanation||"";
+ }catch(e){$("explain").textContent="Hata: "+e.message+" — API anahtarını ve backend kurulumunu kontrol et."}
+ $("analyze").disabled=false;$("analyze").textContent="GERÇEK AI İLE ANALİZ ET";
+};
+</script></body></html>
